@@ -12,4 +12,5 @@ routerName = "notification"
 @router.post(f"/{routerName}/")
 def handle_notification(data: NotificationData):
     adapted_data = adapter.adapt_request(routerName, data.data)
-    return core.handle_request("external_service", f"{routerName}", adapted_data)
+    response = core.handle_request("external_service", f"{routerName}", adapted_data)
+    return adapter.adapt_response(routerName, response)
