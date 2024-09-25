@@ -1,9 +1,13 @@
-from fastapi import FastAPI
-from app.routes import router
+from fastapi import Depends, FastAPI
+from app.core import Core
+from app.externalService.notification.notificationService import NotificationService
+from app.routers.notificationRouter import router as notificationRouter
 
 app = FastAPI()
+core = Core()
 
-app.include_router(router)
+core.register_plugin("external_service", "notification", NotificationService())
+app.include_router(notificationRouter)
 
 if __name__ == "__main__":
     import uvicorn
