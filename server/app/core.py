@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
-
+from app.internalService.authorization.authorizationService import AuthorizationService
 
 def singleton(cls):
     instances = {}
@@ -18,7 +18,6 @@ class Core:
     def __init__(self):
         self.plugins = {
             "external_service": {},
-            "internal_service": {},
         }
 
         load_dotenv()
@@ -29,8 +28,9 @@ class Core:
         
         self.client = MongoClient(uri)
         self.db = self.client["MONGODB"]
-
         self.check_connection()
+
+        self.authorization = AuthorizationService(self.db)
     
     def check_connection(self):
         try:
