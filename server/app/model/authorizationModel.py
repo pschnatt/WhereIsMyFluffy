@@ -1,14 +1,15 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional
 from uuid import UUID
 
-class UserData(BaseModel):
+class RegisterData(BaseModel):
     firstName: str
     lastName: str
-    email: Optional[EmailStr] = None
-    posts: List[UUID]
+    email: str
+    password: str 
     paypal: str
-    createdAt: datetime
-    updatedAt: datetime
-    rewards: List[UUID]
+
+class LoginData(BaseModel):
+    email: str
+    password: str 
