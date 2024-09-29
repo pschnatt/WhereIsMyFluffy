@@ -1,3 +1,8 @@
+import os
+from dotenv import load_dotenv
+from pymongo import MongoClient
+
+
 def singleton(cls):
     instances = {}
     
@@ -15,6 +20,24 @@ class Core:
             "external_service": {},
             "internal_service": {},
         }
+
+        load_dotenv()
+
+        uri = os.getenv("MONGODB_URI")
+        if not uri:
+            raise ValueError("MONGODB_URI not found in environment variables")
+        
+        self.client = MongoClient(uri)
+        self.db = self.client["MONGODB"]
+
+        self.check_connection()
+    
+    def check_connection(self):
+        try:
+            self.client.admin.command('ping') 
+            print("Connected to MongoDB successfully!")
+        except Exception as e:
+            raise ConnectionError(f"Failed to connect to MongoDB: {str(e)}")
 
     def register_plugin(self, plugin_type, service_name, plugin):
         if plugin_type in self.plugins:
