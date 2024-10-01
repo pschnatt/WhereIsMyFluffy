@@ -12,8 +12,8 @@ routerName = "advertisement"
 @router.post(f"/{routerName}/ad-click/")
 def ad_click(data: AdClick):
     data_dict = data.model_dump()
-    core.process(data_dict)
-    return "Successfullly recorded AD clicked"
+    return core.process(data_dict)
+
 
 
       
