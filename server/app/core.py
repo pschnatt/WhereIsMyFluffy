@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from app.internalService.authorization.authorizationService import AuthorizationService
+from server.app.internalService.profile.profileService import ProfileService
 
 def singleton(cls):
     instances = {}
@@ -31,6 +32,7 @@ class Core:
         self.check_connection()
 
         self.authorization = AuthorizationService(self.db)
+        self.profile = ProfileService(self.db)
     
     def check_connection(self):
         try:

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 import os
 from dotenv import load_dotenv
 import bcrypt
-from fastapi import Request, Response
+from fastapi import HTTPException, Request, Response
 import jwt
 from app.model.authorizationModel import RegisterData, LoginData
 
@@ -19,11 +19,14 @@ class AuthorizationService:
             "lastName" : data.lastName,  
             "email" : data.email,
             "password" : hashed_password,
+            "phoneNumber": data.phoneNumber,
             "posts" : [],
             "paypal" : data.paypal,
             "createdAt" : datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "updatedAt" : datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-            "rewards" : []
+            "rewards" : [],
+            "petIds" : [],
+            "imageId" : None
         }
 
         try:
@@ -76,14 +79,18 @@ class AuthorizationService:
     def verify_jwt_token(self, request: Request):
         load_dotenv()
         SECRET_KEY = os.getenv("SECRET_KEY")
+        
         token = request.cookies.get("jwt_token")  
         if not token:
-            raise Exception("No token found in cookies.")
+            raise HTTPException(status_code=401, detail="User not logged in. Please log in.")
+
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+            payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])            
             return payload["user_id"]
+        
         except jwt.ExpiredSignatureError:
-            raise Exception("Token has expired.")
+            raise HTTPException(status_code=401, detail="Token has expired.")
         except jwt.InvalidTokenError:
-            raise Exception("Invalid token.")
+            raise HTTPException(status_code=401, detail="Invalid token.")
+
 

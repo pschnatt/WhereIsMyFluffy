@@ -1,15 +1,15 @@
-from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field
-from typing import List, Optional
-from uuid import UUID
+from pydantic import BaseModel
+from typing import Optional
 
 class RegisterData(BaseModel):
-    firstName: str
-    lastName: str
-    email: str
-    password: str 
-    paypal: str
+    firstName: Optional[str]
+    lastName: Optional[str]
+    email: Optional[str]
+    password: Optional[str]
+    phoneNumber: Optional[str] 
+    paypal: Optional[str]
 
 class LoginData(BaseModel):
     email: str
     password: str 
+    
