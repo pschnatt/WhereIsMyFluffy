@@ -13,7 +13,7 @@ routerName = "advertisement"
 def ad_click(data: AdClick):
     data_dict = data.model_dump()
     core.process(data_dict)
-
+    return "Successfullly recorded AD clicked"
 
 
       
