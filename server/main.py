@@ -3,12 +3,12 @@ from app.core import Core
 from app.externalService.advertisement.advertisementService import advertisementService
 from app.routers.authorizationRouter import router as authorizationRouter
 from app.routers.advertisementRouter import router as advertisementRouter
-from server.app.routers import profileRouter
+from app.routers.profileRouter import router as profileRouter
 
 app = FastAPI()
 core = Core()
 
-core.register_plugin("external_service", "advertisement", advertisementService())
+core.register_plugin("external_service", "advertisement", advertisementService(core.db))
 app.include_router(authorizationRouter)
 app.include_router(advertisementRouter)
 app.include_router(profileRouter)

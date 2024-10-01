@@ -3,9 +3,8 @@ import bcrypt
 from bson import ObjectId
 from fastapi import HTTPException, Request, Response
 import gridfs
-import jwt
-from server.app.model.authorizationModel import RegisterData
-from server.app.model.petmodel import PetData
+from app.model.authorizationModel import RegisterData
+from app.model.petmodel import PetData
 
 
 class ProfileService:
@@ -98,7 +97,7 @@ class ProfileService:
         "imageId": None
     }
 
-    if imagePath is not "":
+    if imagePath != "":
             try:
                 with open(imagePath, "rb") as image_file:
                     image_id = self.fs.put(image_file, filename=imagePath.split("/")[-1], content_type="image/jpeg")

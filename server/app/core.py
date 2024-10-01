@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from app.internalService.authorization.authorizationService import AuthorizationService
-from server.app.internalService.profile.profileService import ProfileService
+from app.internalService.profile.profileService import ProfileService
 
 def singleton(cls):
     instances = {}
