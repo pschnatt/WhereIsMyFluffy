@@ -1,5 +1,4 @@
 from typing import Optional
-from bson import ObjectId
 from pydantic import BaseModel
 
 class PetData(BaseModel):
@@ -10,4 +9,15 @@ class PetData(BaseModel):
   age : Optional[float]
   description : Optional[str]
 
+class PetId(BaseModel):
+  petId : str
 
+class CreatePetForm(BaseModel):
+  userId : str
+  petData : PetData
+  imagePath : Optional[str] = ""
+
+class UpdatePetForm(BaseModel):
+  petId : str
+  petData : PetData
+  imagePath : Optional[str] = ""
