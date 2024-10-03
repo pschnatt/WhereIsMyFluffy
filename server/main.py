@@ -4,6 +4,7 @@ from app.externalService.advertisement.advertisementService import advertisement
 from app.routers.authorizationRouter import router as authorizationRouter
 from app.routers.advertisementRouter import router as advertisementRouter
 from app.routers.profileRouter import router as profileRouter
+from app.routers.postRouter import router as postRouter
 
 app = FastAPI()
 core = Core()
@@ -12,6 +13,7 @@ core.register_plugin("external_service", "advertisement", advertisementService(c
 app.include_router(authorizationRouter)
 app.include_router(advertisementRouter)
 app.include_router(profileRouter)
+app.include_router(postRouter)
 
 if __name__ == "__main__":
     import uvicorn

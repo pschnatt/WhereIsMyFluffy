@@ -1,8 +1,14 @@
 import os
+import certifi
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from app.internalService.authorization.authorizationService import AuthorizationService
 from app.internalService.profile.profileService import ProfileService
+from app.internalService.post.postService import PostService
+
+
+ca = certifi.where()
+
 
 def singleton(cls):
     instances = {}
@@ -27,12 +33,13 @@ class Core:
         if not uri:
             raise ValueError("MONGODB_URI not found in environment variables")
         
-        self.client = MongoClient(uri)
+        self.client = MongoClient(uri, tlsCAFile = ca)
         self.db = self.client["MONGODB"]
         self.check_connection()
 
         self.authorization = AuthorizationService(self.db)
         self.profile = ProfileService(self.db)
+        self.post = PostService(self.db)
     
     def check_connection(self):
         try:

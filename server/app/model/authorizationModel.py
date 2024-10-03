@@ -8,6 +8,7 @@ class RegisterData(BaseModel):
     password: Optional[str]
     phoneNumber: Optional[str] 
     paypal: Optional[str]
+    address: str
 
 class LoginData(BaseModel):
     email: str
