@@ -9,8 +9,8 @@ core = Core()
 routerName = "profile"
 
 @router.post(f"/{routerName}/updateUser/")
-def updateUser(request: Request, updateData: UserForm):
-  return core.profile.updateUser(request, updateData.registerData, updateData.imagePath)
+def updateUser(updateData: UserForm):
+  return core.profile.updateUser(updateData.userId, updateData.registerData, updateData.imagePath)
 
 @router.get(f"/{routerName}/getUser/")
 def getUser(userId : UserId):
@@ -22,11 +22,11 @@ def getUser(userId : UserId):
 
 @router.post(f"/{routerName}/createPet/")
 def createPet(createData : CreatePetForm):
-  return core.profile.createPet(createData.userId, createData.data, createData.imagePath)
+  return core.profile.createPet(createData.userId, createData.petData, createData.imagePath)
 
 @router.post(f"/{routerName}/updatePet/")
 def updatePet(updateData : UpdatePetForm):
-  return core.profile.updatePet(updateData.petId, updateData.data, updateData.imagePath)
+  return core.profile.updatePet(updateData.petId, updateData.petData, updateData.imagePath)
 
 @router.get(f"/{routerName}/getPet/")
 def getPet(petId : PetId):

@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
 import bcrypt
 from bson import ObjectId
-from fastapi import HTTPException, Request, Response
+from fastapi import HTTPException, Response
 import gridfs
 from app.model.authorizationModel import RegisterData
 from app.model.petmodel import PetData
+from app.common.ConvertObjectId import *
 
 
 class ProfileService:
@@ -13,8 +14,7 @@ class ProfileService:
         self.pets_collection = dbCollection["pets"]
         self.fs = gridfs.GridFS(dbCollection)
 
-  def updateUser(self, request: Request, data: RegisterData, imagePath:str = ""):
-      user_id = self.get_user_from_jwt(request)
+  def updateUser(self, userId : str, data: RegisterData, imagePath:str = ""):
 
       update_data = data.model_dump(exclude_unset=True)
 
@@ -35,7 +35,7 @@ class ProfileService:
       if not update_data:
           return {"message": "No updates provided."}
 
-      user_id_obj = ObjectId(user_id)
+      user_id_obj = ObjectId(userId)
 
       result = self.users_collection.update_one(
           {"_id": user_id_obj},
@@ -58,7 +58,8 @@ class ProfileService:
           user = self.users_collection.find_one({"_id": user_id})
 
           if user:
-              return user
+            user = convertObjectIdq(user)
+            return user
           else:
               raise HTTPException(status_code=404, detail="User not found.")
         
@@ -153,6 +154,7 @@ class ProfileService:
         pet = self.pets_collection.find_one({"_id": pet_id_obj})
         
         if pet:
+            pet = convertObjectIdq(pet)
             return pet
         else:
             raise HTTPException(status_code=404, detail="Pet not found.")

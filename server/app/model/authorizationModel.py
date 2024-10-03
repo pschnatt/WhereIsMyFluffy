@@ -17,5 +17,6 @@ class UserId(BaseModel):
     userId: str
 
 class UserForm(BaseModel):
+    userId: str
     registerData : RegisterData
     imagePath : Optional[str] = ""
