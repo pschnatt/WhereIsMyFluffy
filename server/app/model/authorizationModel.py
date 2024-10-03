@@ -14,3 +14,10 @@ class LoginData(BaseModel):
     email: str
     password: str 
     
+class UserId(BaseModel):
+    userId: str
+
+class UserForm(BaseModel):
+    userId: str
+    registerData : RegisterData
+    imagePath : Optional[str] = ""

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Request, Response
 from app.core import Core
 from app.model.authorizationModel import RegisterData, LoginData
 
