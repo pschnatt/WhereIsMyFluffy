@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ui/widgets/forms/add_petform.dart';
 
 class UserProfilePage extends StatelessWidget {
   const UserProfilePage({super.key});
@@ -21,7 +22,7 @@ class UserProfilePage extends StatelessWidget {
             Divider(),
             Mypet(),
             Divider(),
-            Recommend()
+            UserPosts()
           ],
         ),
       ),
@@ -80,7 +81,7 @@ class Profile extends StatelessWidget {
 
 class Mypet extends StatelessWidget {
   const Mypet({super.key});
-
+  
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -88,8 +89,7 @@ class Mypet extends StatelessWidget {
       margin: const EdgeInsets.all(10), // Margin around the container
       decoration: BoxDecoration(
         color: const Color.fromARGB(255, 255, 255, 255),
-        borderRadius:
-            BorderRadius.circular(16), // Rounded corners for the container
+        borderRadius: BorderRadius.circular(16), // Rounded corners for the container
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,9 +107,9 @@ class Mypet extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () {
-                  // See all pets action
+                  _showModalAddPet(context);
                 },
-                child: const Text('See All +'),
+                child: const Text('Add More Pet'),
               ),
             ],
           ),
@@ -135,8 +135,21 @@ class Mypet extends StatelessWidget {
     );
   }
 
+  void _showModalAddPet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          height: 500,
+          color: Colors.amber,
+          child: const Center(child: AddPetForm()), // Assuming AddPetForm is imported
+        );
+      },
+    );
+  }
+
   // Widget to build pet card
-  Widget _buildPetCard(String name, String distance, String imageUrl) {
+  Widget _buildPetCard(String name, String lostplace, String imageUrl) {
     return Container(
       margin: const EdgeInsets.all(5.0),
       padding: const EdgeInsets.all(3.0),
@@ -164,16 +177,15 @@ class Mypet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 5),
-              Text('Distance $name from you',
+              Text('lostplace $name from you',
                   style: const TextStyle(fontSize: 10, color: Colors.white)),
               Text(
-                distance,
+                lostplace,
                 style: const TextStyle(color: Colors.white),
               ),
               const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () {
-                  // Track pet action
                 },
                 child: const Text('More Detail'),
               ),
@@ -185,8 +197,8 @@ class Mypet extends StatelessWidget {
   }
 }
 
-class Recommend extends StatelessWidget {
-  const Recommend({super.key});
+class UserPosts extends StatelessWidget {
+  const UserPosts({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -200,12 +212,12 @@ class Recommend extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Nearby Restaurants Section Title
+          // User Posts Section Title
           const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Pet Cafe Nearby',
+                'User Posts',
                 style: TextStyle(
                     fontSize: 25,
                     fontWeight: FontWeight.bold,
@@ -214,68 +226,91 @@ class Recommend extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 10), // Space between title and card
+          const SizedBox(height: 10), // Space between title and posts
 
-          _buildRecommendationCard(
-              'The Cat Cafe',
-              '2.0 km',
-              'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcReTsAbMThNX385LhwSNpy1snKoesi9wpkzmA&s',
-              '4.8'),
-          _buildRecommendationCard(
-              'Pet Lovers Restaurant',
-              '3.5 km',
-              'https://aboutmom.co/wp-content/uploads/2022/02/littlezoocafe_30.jpg',
-              '4.5'),
-          _buildRecommendationCard(
-              'Pet-friendly Diner',
-              '5.2 km',
-              'https://cdn.tatlerasia.com/tatlerasia/i/2024/03/01173100-268453314-455847395929761-18384109411955948-n_cover_1080x1307.jpg',
-              '4.3'),
+          // List of User Posts
+          _buildPostCard(
+              'Panda',
+              'ABC School',
+              'https://www.americanhumane.org/app/uploads/2021/03/Panda2-1024x576.png',
+              'Please help me find my lost cat.',
+              'found'),
+          _buildPostCard(
+              'Siri',
+              'Happy Palace',
+              'https://s.isanook.com/ns/0/ui/1913/9565922/GXPpWIraUAAFGeJ.jpg',
+              'A small kitten was found near the park.',
+              'pending'),
+          _buildPostCard(
+              'Bella',
+              'KMITL',
+              'https://www.readhowl.com/wp-content/uploads/2017/02/01.gif',
+              'If anyone sees her, please contact me.',
+              'missing'),
+          _buildPostCard(
+              'Whiskers',
+              'City Park',
+              'https://images.squarespace-cdn.com/content/v1/5e8a2944d7ce562e250eb009/1606862534597-VR0324SOZZ1VOIQYCTDO/goki.jpg',
+              'She has been returned safely!',
+              'returned'),
         ],
       ),
     );
   }
 
-  // Function to build a recommendation card
-  Widget _buildRecommendationCard(
-      String name, String distance, String imageUrl, String rating) {
+  // Function to build a user post card with a status
+  Widget _buildPostCard(String petname, String lostplace, String imageUrl,
+      String description, String status) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(vertical: 6.0), // Padding between cards
+      padding: const EdgeInsets.symmetric(vertical: 6.0), // Padding between cards
       child: Card(
         shape: RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(15), // Rounded corners for the card
+          borderRadius: BorderRadius.circular(15), // Rounded corners for the card
         ),
         child: ListTile(
           leading: CircleAvatar(
-            backgroundImage:
-                NetworkImage(imageUrl), // Placeholder image for the restaurant
+            backgroundImage: NetworkImage(imageUrl), // Placeholder image for the post
           ),
           title: Text(
-            name,
-            style: const TextStyle(
-                fontSize: 16), // Font size for the restaurant name
+            petname,
+            style: const TextStyle(fontSize: 16), // Font size for the pet name
           ),
-          subtitle: Text(
-            distance,
-            style: const TextStyle(fontSize: 14), // Font size for the distance
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.star, color: Colors.yellow),
-              const SizedBox(
-                  width: 5), // Space between the star icon and rating
               Text(
-                rating,
-                style:
-                    const TextStyle(fontSize: 14), // Font size for the rating
+                lostplace,
+                style: const TextStyle(fontSize: 14), // Font size for the lost place
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontSize: 12, color: Colors.grey), // Description of the post
               ),
             ],
           ),
+          trailing: _buildStatusIcon(status), // Status icon
         ),
       ),
     );
+  }
+
+  // Function to return the appropriate icon based on the post status
+  Widget _buildStatusIcon(String status) {
+    switch (status) {
+      case 'missing':
+        return const Icon(Icons.close, color: Colors.red); // X icon for missing
+      case 'pending':
+        return const Icon(Icons.help_outline, color: Colors.orange); // ? icon for pending
+      case 'found':
+        return const Icon(Icons.pets, color: Colors.green); // Paw icon for found
+      case 'returned':
+        return const Icon(Icons.home, color: Colors.blue); // Home icon for returned
+      default:
+        return const Icon(Icons.error, color: Colors.grey); // Default icon
+    }
   }
 }
