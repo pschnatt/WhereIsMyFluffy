@@ -1,6 +1,16 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class PaymentData(BaseModel):
-    owner_id: str
-    finder_id: str
-    reward_amount: float
+    ownerUserId: str
+    petName: str
+    finderName: str
+    finderBankAccountNumber: str
+    finderBankAccountType: str
+    finderBankAccountName: str
+    amount: float
+    status: str
+
+class SlipUploadData(BaseModel):
+    transactionId: str
+    slip_image_url: str

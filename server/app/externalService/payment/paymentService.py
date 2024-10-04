@@ -1,127 +1,177 @@
 import os
 import requests
-import qrcode
-import uuid
+import cv2
+# from pyzbar.pyzbar import decode
 from pymongo import MongoClient
 from fastapi import HTTPException, Request
 from dotenv import load_dotenv
 from bson import ObjectId
-from io import BytesIO
 from datetime import datetime
+from app.model.paymentModel import PaymentData
 from app.internalService.authorization.authorizationService import AuthorizationService
+from app.model.postModel import PostData
 
 load_dotenv()
 
 class PaymentService:
     def __init__(self, dbCollection):
-        self.users_collection = dbCollection["users"]
         self.payments_collection = dbCollection["payments"]
-        self.paypal_api_base_url = "https://api.sandbox.paypal.com"
-
-        self.client_id = os.getenv("PAYPAL_CLIENT_ID")
-        self.client_secret = os.getenv("PAYPAL_CLIENT_SECRET")
-
-        if not self.client_id or not self.client_secret:
-            raise ValueError("PayPal credentials not found in environment variables")
 
         self.authorization_service = AuthorizationService(dbCollection)
+        self.verify_api_token = "a2ae274e-9774-4ea8-ab99-d51fdc472bc0"  # API Token for slip verification
 
-    def generate_qr_code(self, link):
-        """Generate a QR code for a given PayPal link."""
-        qr = qrcode.QRCode(version=1, box_size=10, border=5)
-        qr.add_data(link)
-        qr.make(fit=True)
-        img = qr.make_image(fill="black", back_color="white")
-        byte_io = BytesIO()
-        img.save(byte_io, 'PNG')
-        byte_io.seek(0)
-        return byte_io
+    def create_user_payment(self, post_data: PostData, finder_data: dict, request: Request):
+        user = self.authorization_service.verify_jwt_token(request)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found.")
+        
+        user_id = self.authorization_service.users_collection.find_one({"_id": ObjectId(user_id)})
 
-    def generate_payment_qr_code(self, finder_paypal_link, amount):
-        """Generate a QR code for direct payment to the finder."""
-        payment_link = f"{finder_paypal_link}?amount={amount}"
-        return self.generate_qr_code(payment_link)
-
-    def verify_user_token(self, request: Request):
-        """Verify the user's JWT token using AuthorizationService."""
-        try:
-            user_id = self.authorization_service.verify_jwt_token(request)
-            user = self.users_collection.find_one({"_id": user_id})
-            if not user:
-                raise HTTPException(status_code=401, detail="User not registered in the system")
-            return user
-        except Exception as e:
-            raise HTTPException(status_code=401, detail=f"Unauthorized: {str(e)}")
-
-    def process(self, request: Request, data):
-        """Main method to process payment tasks, including user verification and QR code generation."""
-        # Verify user token and retrieve user details
-        user = self.verify_user_token(request)
-
-        # Retrieve owner and finder details
-        owner_id = data["owner_id"]
-        finder_id = data["finder_id"]
-        reward_amount = data["reward_amount"]
-
-        owner = self.users_collection.find_one({"_id": owner_id})
-        finder = self.users_collection.find_one({"_id": finder_id})
-
-        if not owner or not finder:
-            raise HTTPException(status_code=400, detail="Either the owner or finder is not registered.")
-
-        # Fetch PayPal account from the registered finder
-        finder_paypal_account = finder.get("paypal")
-        if not finder_paypal_account:
-            raise HTTPException(status_code=400, detail="Finder does not have a PayPal account registered.")
-
-        # Generate payment QR code for finder
-        finder_qr_code = self.generate_payment_qr_code(finder_paypal_account, reward_amount)
-
-        # Create a new payment record in the database with a unique transaction ID
-        transaction_id = str(uuid.uuid4())  # Generate a unique transaction ID
-        payment_record = {
-            "owner_id": data.owner_id,
-            "finder_id": data.finder_id,
-            "reward_amount": data.reward_amount,
-            "transaction_id": transaction_id,  # Store the generated transaction ID
-            "status": "pending",                # Default status
-            "timestamp": datetime.utcnow().isoformat()  # Record the current time
+        """Generate a bill for the owner to send money to the finder."""
+        payment_data = {
+            "ownerUserId": user_id,
+            "petName": post_data.name,
+            "finderName": finder_data.get("finderName"),
+            "finderBankAccountNumber": finder_data.get("finderBankAccountNumber"),
+            "finderBankAccountType": finder_data.get("finderBankAccountType"),
+            "finderBankAccountName": finder_data.get("finderBankAccountName"),
+            "amount": post_data.reward,
+            "status": "unpaid",
+            "timestamp": datetime.utcnow().isoformat(),
         }
-
-        # Insert the payment record into MongoDB
-        self.payments_collection.insert_one(payment_record)
+        
+        transaction_id = str(ObjectId())
+        payment_data["transaction_id"] = transaction_id
+        
+        self.payments_collection.insert_one(payment_data)
 
         return {
-            "finder_qr_code": finder_qr_code,
-            "transaction_id": transaction_id,  # Return the unique transaction ID
-            "status": "pending",
-            "timestamp": payment_record["timestamp"]
+            "transaction_id": transaction_id,
+            "status": "unpaid",
+            "timestamp": payment_data["timestamp"]
         }
 
-    def confirm_payment(self, request: Request, transaction_id: str):
-        """
-        Update the payment status to 'successful' once the finder confirms receipt of the money.
-        """
-        # Verify the user token to ensure the finder is authorized
-        user = self.verify_user_token(request)
-
-        # Find the payment record based on the transaction ID
+    def upload_slip(self, transaction_id: str, slip_image_url: str):
+        """Owner uploads transaction slip, and status changes to 'pending'."""
         payment_record = self.payments_collection.find_one({"transaction_id": transaction_id})
 
         if not payment_record:
             raise HTTPException(status_code=404, detail="Payment record not found")
 
-        # Check if the user is the finder
-        if str(payment_record["finder_id"]) != str(user["_id"]):
-            raise HTTPException(status_code=403, detail="You are not authorized to confirm this payment")
+        refNbr = self.extract_qr_code_data(slip_image_url)
 
-        # Update the payment status to 'successful'
         update_result = self.payments_collection.update_one(
             {"transaction_id": transaction_id},
-            {"$set": {"status": "successful", "confirmation_timestamp": datetime.utcnow().isoformat()}}
+            {"$set": {"slip_image_url": slip_image_url, "status": "pending", "refNbr": refNbr}}
         )
 
         if update_result.modified_count == 1:
-            return {"detail": "Payment successfully confirmed", "transaction_id": transaction_id, "status": "successful"}
+            return {"detail": "Slip uploaded successfully", "status": "pending"}
         else:
-            raise HTTPException(status_code=500, detail="Failed to update the payment status")
+            raise HTTPException(status_code=500, detail="Failed to upload the slip")
+
+    # def verify_slip(self, transaction_id: str):
+    #     """Verify the uploaded slip using OpenSlipVerify API and update the status."""
+    #     payment_record = self.payments_collection.find_one({"transaction_id": transaction_id})
+
+    #     if not payment_record:
+    #         raise HTTPException(status_code=404, detail="Payment record not found")
+
+    #     # Extract necessary details from the payment record
+    #     slip_image_url = payment_record.get("slip_image_url")
+    #     amount = payment_record.get("amount")
+
+    #     if not slip_image_url:
+    #         raise HTTPException(status_code=400, detail="No slip uploaded for verification")
+
+    #     # Assuming the `refNbr` is fetched from the QR code (this part depends on how you extract the QR code from the image)
+    #     refNbr = payment_record.get("refNbr")
+    #     if not refNbr:
+    #         raise HTTPException(status_code=400, detail="Cannot extract refNbr from the uploaded slip.")
+
+    #     # API payload for slip verification
+    #     verification_payload = {
+    #         "refNbr": refNbr,
+    #         "amount": str(amount),  # Convert amount to string as required by the API
+    #         "token": self.verify_api_token  # Using the token provided for OpenSlipVerify API
+    #     }
+
+    #     # API request to OpenSlipVerify
+    #     verification_response = requests.post(
+    #         "https://api.openslipverify.com/",
+    #         headers={"Content-Type": "application/json"},
+    #         json=verification_payload
+    #     )
+
+    #     if verification_response.status_code == 200:
+    #         response_data = verification_response.json()
+
+    #         if response_data["success"]:
+    #             # Update payment status to 'successful'
+    #             update_result = self.payments_collection.update_one(
+    #                 {"transaction_id": transaction_id},
+    #                 {
+    #                     "$set": {
+    #                         "status": "successful",
+    #                         "verified_timestamp": datetime.utcnow().isoformat()
+    #                     }
+    #                 }
+    #             )
+
+    #             if update_result.modified_count == 1:
+    #                 return {"detail": "Slip verified successfully", "status": "successful"}
+    #             else:
+    #                 raise HTTPException(status_code=500, detail="Failed to update payment status")
+    #         else:
+    #             # Slip verification failed (e.g., incorrect amount, invalid slip)
+    #             raise HTTPException(status_code=400, detail=response_data.get("msg", "Slip verification failed"))
+    #     else:
+    #         # Handle errors from the OpenSlipVerify API
+    #         raise HTTPException(
+    #             status_code=verification_response.status_code,
+    #             detail=verification_response.json().get("msg", "Slip verification error")
+    #         )
+
+    # def extract_qr_code_data(self, image_path: str):
+    #     """Extract QR code data from the slip image."""
+    #     image = cv2.imread(image_path)
+    #     decoded_objects = decode(image)
+
+    #     if not decoded_objects:
+    #         raise HTTPException(status_code=400, detail="Cannot extract refNbr: No QR code found in the image.")
+
+    #     for obj in decoded_objects:
+    #         return obj.data.decode('utf-8')
+
+    #     raise HTTPException(status_code=400, detail="Cannot extract refNbr: QR code could not be decoded.")
+
+    def get_user_payment(self, transaction_id: str):
+        """View payment details."""
+        payment_record = self.payments_collection.find_one({"transaction_id": transaction_id})
+
+        if not payment_record:
+            raise HTTPException(status_code=404, detail="Payment record not found")
+
+        return payment_record
+
+    def reupload_slip(self, transaction_id: str, slip_image_url: str):
+        """Allow re-uploading of the slip if the status is 'pending'."""
+        payment_record = self.payments_collection.find_one({"transaction_id": transaction_id})
+
+        if not payment_record:
+            raise HTTPException(status_code=404, detail="Payment record not found")
+
+        if payment_record["status"] != "pending":
+            raise HTTPException(status_code=400, detail="Cannot re-upload slip unless status is 'pending'")
+
+        update_result = self.payments_collection.update_one(
+            {"transaction_id": transaction_id},
+            {"$set": {"slip_image_url": slip_image_url}}
+        )
+
+        if update_result.modified_count == 1:
+            return {"detail": "Slip re-uploaded successfully", "status": "pending"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to re-upload the slip")
+
+# update_user_data if they enter payment data
