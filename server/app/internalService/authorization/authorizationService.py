@@ -26,7 +26,8 @@ class AuthorizationService:
             "updatedAt" : datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "rewards" : [],
             "petIds" : [],
-            "imageId" : None
+            "imageId" : None,
+            "address": str
         }
 
         try:

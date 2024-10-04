@@ -8,6 +8,7 @@ class RegisterData(BaseModel):
     password: Optional[str]
     phoneNumber: Optional[str] 
     paypal: Optional[str]
+    address: str
 
 class LoginData(BaseModel):
     email: str
@@ -17,5 +18,6 @@ class UserId(BaseModel):
     userId: str
 
 class UserForm(BaseModel):
+    userId: str
     registerData : RegisterData
     imagePath : Optional[str] = ""
