@@ -162,7 +162,7 @@ class PaymentService:
             raise HTTPException(status_code=404, detail="Payment record not found")
 
         if payment_record["status"] != "pending":
-            raise HTTPException(status_code=400, detail="Cannot re-upload slip unless status is 'pending'")
+            raise HTTPException(status_code=400, detail="Slip not found")
 
         update_result = self.payments_collection.update_one(
             {"transaction_id": transaction_id},
@@ -174,4 +174,36 @@ class PaymentService:
         else:
             raise HTTPException(status_code=500, detail="Failed to re-upload the slip")
 
-# update_user_data if they enter payment data
+def update_user_payment_data(self, user_id: str, finder_data: dict):
+    """
+    Update user payment data if the finder has not entered bank account details.
+    """
+    user = self.authorization_service.users_collection.find_one({"_id": ObjectId(user_id)})
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    finder_bank_account_number = finder_data.get("finderBankAccountNumber")
+    finder_bank_account_name = finder_data.get("finderBankAccountName")
+    finder_bank_account_type = finder_data.get("finderBankAccountType")
+
+    if not finder_bank_account_number or not finder_bank_account_name or not finder_bank_account_type:
+        raise HTTPException(
+            status_code=400,
+            detail="Finder bank details missing. Please enter the required data."
+            # need to be prompt to page for enter payment data
+        )
+
+    update_result = self.authorization_service.users_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {
+            "finderBankAccountNumber": finder_bank_account_number,
+            "finderBankAccountName": finder_bank_account_name,
+            "finderBankAccountType": finder_bank_account_type
+        }}
+    )
+
+    if update_result.modified_count == 1:
+        return {"detail": "User payment data updated successfully"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to update user payment data")
