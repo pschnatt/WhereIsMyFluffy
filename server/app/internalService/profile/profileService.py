@@ -25,7 +25,7 @@ class ProfileService:
             try:
                 with open(imagePath, "rb") as image_file:
                     image_id = self.fs.put(image_file, filename=imagePath.split("/")[-1], content_type="image/jpeg")
-                    update_data["imageId"] = image_id  
+                    update_data["imageId"] = image_id
             except Exception as e:
                 raise HTTPException(status_code=400, detail=f"Error uploading image: {str(e)}")
           

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from pymongo.collection import Collection
 from bson import ObjectId
-from app.model.postModel import PostData, ReplyData
+from app.model.postModel import GetPostById, GetReplyById, PostData, ReplyData
 
 class PostService:
     def __init__(self, dbCollection: Collection):
@@ -10,14 +10,13 @@ class PostService:
 
     def create_post(self, data: PostData):
         post_document = {
-            "name": data.name,
-            "age": data.age,
-            "weight": data.weight,
-            "gender": data.gender,
+            "userId" : data.userId,
+            "petId" : data.petId,
             "address": data.address,
             "reward": data.reward,
             "createdAt": datetime.now(timezone.utc),
-            "updatedAt": datetime.now(timezone.utc)
+            "updatedAt": datetime.now(timezone.utc),
+            "replyIds": []
         }
 
         try:
@@ -31,23 +30,26 @@ class PostService:
 
     def reply_post(self,data: ReplyData):
         reply_document = {
+            "postId": data.postId,
+            "userId": data.userId,
             "address": data.address,
             "detail": data.detail,
             "createdAt": datetime.now(timezone.utc),
             "updatedAt": datetime.now(timezone.utc)
         }
-
-
         try:
             result = self.reply_collection.insert_one(reply_document)
             if result.inserted_id:
+                self.posts_collection.update_one(
+                    {"_id": data.postId},
+                    {"$push": {"replyIds": str(result.inserted_id)}}
+                )
                 return {"message": "Reply created successfully.", "reply_id": str(result.inserted_id)}
             else:
-                return {"message": "Failed to reply post."}
+                return {"message": "Failed to reply to the post."}
         except Exception as e:
-            raise Exception(f"An error occurred while replying the post: {str(e)}")
+            raise Exception(f"An error occurred while replying to the post: {str(e)}")
         
-
 
     def get_posts(self):
         try:
@@ -59,10 +61,10 @@ class PostService:
             raise Exception(f"An error occurred while fetching posts: {str(e)}")
 
 
-    def get_post_by_id(self, post_id: str):
+    def get_post_by_id(self, post_id: GetPostById):
         try:
             
-            post = self.posts_collection.find_one({"_id": ObjectId(post_id)})
+            post = self.posts_collection.find_one({"_id": ObjectId(post_id.postId)})
             if post:
                 post["_id"] = str(post["_id"])
                 return post
@@ -72,19 +74,18 @@ class PostService:
             raise Exception(f"An error occurred while fetching the post: {str(e)}")
 
 
-    def get_replies(self):
+    def get_replies(self, postId: GetPostById):
         try:
-            replies = list(self.reply_collection.find())
+            replies = list(self.reply_collection.find({"postId": postId.postId}))
             for reply in replies:
                 reply["_id"] = str(reply["_id"])
             return replies
         except Exception as e:
-            raise Exception(f"An error occurred while fetching repliess: {str(e)}")
+            raise Exception(f"An error occurred while fetching replies: {str(e)}")
 
 
-    def get_reply_by_id(self, reply_id: str):
+    def get_reply_by_id(self, reply_id: GetReplyById):
         try:
-            
             reply = self.reply_collection.find_one({"_id": ObjectId(reply_id)})
             if reply:
                 reply["_id"] = str(reply["_id"])
