@@ -5,10 +5,10 @@ from pymongo import MongoClient
 from app.internalService.authorization.authorizationService import AuthorizationService
 from app.internalService.profile.profileService import ProfileService
 from app.internalService.post.postService import PostService
+from app.externalService.payment.paymentService import PaymentService
 
 
 ca = certifi.where()
-
 
 def singleton(cls):
     instances = {}
@@ -40,6 +40,7 @@ class Core:
         self.authorization = AuthorizationService(self.db)
         self.profile = ProfileService(self.db)
         self.post = PostService(self.db)
+        self.payment = PaymentService(self.db)
     
     def check_connection(self):
         try:
