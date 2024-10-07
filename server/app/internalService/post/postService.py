@@ -22,6 +22,7 @@ class PostService:
         try:
             result = self.posts_collection.insert_one(post_document)
             if result.inserted_id:
+                self.update_user_posts(data.userId, str(result.inserted_id))
                 return {"message": "Post created successfully.", "post_id": str(result.inserted_id)}
             else:
                 return {"message": "Failed to create post."}
