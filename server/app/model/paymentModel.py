@@ -13,6 +13,7 @@ class PaymentDetail(BaseModel):
     status: str
     amount: float
 
-class SlipUploadData(BaseModel):
-    transactionId: str
-    slip_image_url: str
+class UpdatePaymentDetail(BaseModel):
+    paymentId : str
+    status: str
+
