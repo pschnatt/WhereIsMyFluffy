@@ -7,6 +7,8 @@ class PostService:
     def __init__(self, dbCollection: Collection):
         self.posts_collection = dbCollection["posts"]
         self.reply_collection = dbCollection["reply"]
+        self.users_collection = dbCollection["users"]
+
 
     def create_post(self, data: PostData):
         post_document = {
@@ -22,7 +24,10 @@ class PostService:
         try:
             result = self.posts_collection.insert_one(post_document)
             if result.inserted_id:
-                self.update_user_posts(data.userId, str(result.inserted_id))
+                self.users_collection.update_one(
+                    {"_id": data.userId},
+                    {"$push": {"posts": str(result.inserted_id)}}
+                )
                 return {"message": "Post created successfully.", "post_id": str(result.inserted_id)}
             else:
                 return {"message": "Failed to create post."}
