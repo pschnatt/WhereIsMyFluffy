@@ -67,10 +67,14 @@ class PostService:
             profileService = ProfileService(self.dbCollection)
             for post in posts:
                 post["_id"] = str(post["_id"]) 
-                user = profileService.getUser(post["userId"]) 
-                post["user"] = user  
+                user = profileService.getUser(post["userId"])
+                userImg = profileService.getUserImage(post["userId"]) 
+                post["user"] = user
+                post["userImg"] = userImg
                 pet = profileService.getPet(post["petId"]) 
+                petImg = profileService.getPetImage(post["petId"]) 
                 post["pet"] = pet 
+                post["petImg"] = petImg
                 enriched_posts.append(post) 
 
             return enriched_posts

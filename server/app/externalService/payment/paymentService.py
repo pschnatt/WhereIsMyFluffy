@@ -1,5 +1,6 @@
 import os
 import requests
+import cv2
 # from pyzbar.pyzbar import decode
 from pymongo import MongoClient
 from fastapi import HTTPException, Request
