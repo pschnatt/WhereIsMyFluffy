@@ -1,9 +1,16 @@
 
 import 'package:flutter/material.dart';
+import 'package:ui/constants.dart';
 import 'package:ui/widgets/forms/signup.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:ui/main.dart';
+import 'package:ui/constants.dart';
+
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
+  
 
   @override
   _LoginFormState createState() => _LoginFormState();
@@ -11,18 +18,63 @@ class LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<LoginForm> {
   final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
+
 
   // Form fields controllers
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
-  // Submit form function
-  void _submitForm() {
+  // Login function
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      // Handle the form submission
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Logging in to your account...')),
-      );
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        final response = await http.post(
+          Uri.parse('${APIURL}/authorization/login/'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({
+            'email': emailController.text,
+            'password': passwordController.text,
+          }),
+        );
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (response.statusCode == 200) {
+          // Login successful
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Login successful!')),
+          );
+
+          // You can navigate to the home page or another page after successful login
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const NavigationBarApp()), // Replace with your Home Page
+          );
+        } else {
+          // Login failed
+          if (!mounted) return;
+          final errorData = json.decode(response.body);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorData['detail'] ?? 'Login failed')),
+          );
+        }
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -78,7 +130,7 @@ class _LoginFormState extends State<LoginForm> {
                   SizedBox(height: 4),
                   TextFormField(
                     controller: emailController,
-                    obscureText: true, // Obscure password input
+                    //obscureText: true, // Obscure password input
                     decoration: InputDecoration(
                       hintText: 'example@gmail.com',
                       hintStyle: TextStyle(
@@ -151,7 +203,9 @@ class _LoginFormState extends State<LoginForm> {
                       ),
                     ),
                     onPressed: _submitForm,
-                    child: Text('Log In'),
+                    child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white,)
+                      : const Text('Log In'),
                   ),
                 ),
               ),
@@ -163,7 +217,7 @@ class _LoginFormState extends State<LoginForm> {
                   // Navigate to the signup page when the text is clicked
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => SignupPage()), // Navigate to SignupPage
+                    MaterialPageRoute(builder: (context) => SignupForm()), // Navigate to SignupPage
                   );
                 },
                 child: RichText(

@@ -199,22 +199,7 @@ class _LostPetFormState extends State<LostPetForm> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              Container(
-                width: 120,
-                height: 35,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15.0),
-                    ),
-                  ),
-                  onPressed: () {},
-                  child: const Text('Report'),
-                ),
-              ),
+
             ],
           ),
         ),
