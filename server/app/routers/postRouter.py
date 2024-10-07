@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Response, FastAPI, Depends,HTTPException
 from app.core import Core
-from app.model.postModel import PostData,ReplyData
+from app.model.postModel import GetPostById, GetReplyById, PostData,ReplyData
 from bson import ObjectId
 
 router = APIRouter()
@@ -26,11 +26,9 @@ def get_posts():
         raise HTTPException(status_code=500, detail=str(e))
     
 
-@router.get(f"/{routerName}/getPost/{{post_id}}")
-def get_post(post_id: str):
+@router.get(f"/{routerName}/getPost/")
+def get_post(post_id: GetPostById):
     try:
-        if not ObjectId.is_valid(post_id):
-            raise HTTPException(status_code=400, detail="Invalid Post ID format.")
         post = core.post.get_post_by_id(post_id)
         if not post:
             raise HTTPException(status_code=404, detail="Post not found.")
@@ -40,19 +38,17 @@ def get_post(post_id: str):
 
 
 @router.get(f"/{routerName}/getReplies/")
-def get_replies():
+def get_replies(post_id: GetPostById):
     try:
-        replies = core.post.get_replies()
+        replies = core.post.get_replies(post_id)
         return replies
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
 
-@router.get(f"/{routerName}/getReply/{{reply_id}}")
-def get_reply(reply_id: str):
+@router.get(f"/{routerName}/getReply/")
+def get_reply(reply_id: GetReplyById):
     try:
-        if not ObjectId.is_valid(reply_id):
-            raise HTTPException(status_code=400, detail="Invalid Reply ID format.")
         reply = core.post.get_reply_by_id(reply_id)
         if not reply:
             raise HTTPException(status_code=404, detail="Reply not found.")
