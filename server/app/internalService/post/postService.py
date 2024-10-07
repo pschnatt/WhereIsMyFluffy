@@ -60,10 +60,19 @@ class PostService:
 
     def get_posts(self):
         try:
-            posts = list(self.posts_collection.find())
+            posts = list(self.posts_collection.find({}, {"userId": 1, "petId": 1, "address": 1, "reward": 1}))
+            
+            enriched_posts = []
+            
             for post in posts:
-                post["_id"] = str(post["_id"])
-            return posts
+                post["_id"] = str(post["_id"]) 
+                user = self.getUser(post["userId"]) 
+                post["user"] = user  
+                pet = self.getPet(post["petId"]) 
+                post["pet"] = pet 
+                enriched_posts.append(post) 
+
+            return enriched_posts
         except Exception as e:
             raise Exception(f"An error occurred while fetching posts: {str(e)}")
 
