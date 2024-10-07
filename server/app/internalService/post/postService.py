@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from pymongo.collection import Collection
 from bson import ObjectId
 from app.model.postModel import GetPostById, GetReplyById, PostData, ReplyData
+from app.internalService.profile.profileService import ProfileService
 
 class PostService:
     def __init__(self, dbCollection: Collection):
@@ -61,14 +62,13 @@ class PostService:
     def get_posts(self):
         try:
             posts = list(self.posts_collection.find({}, {"userId": 1, "petId": 1, "address": 1, "reward": 1}))
-            
             enriched_posts = []
-            
+            profileService = ProfileService()
             for post in posts:
                 post["_id"] = str(post["_id"]) 
-                user = self.getUser(post["userId"]) 
+                user = profileService.getUser(post["userId"]) 
                 post["user"] = user  
-                pet = self.getPet(post["petId"]) 
+                pet = profileService.getPet(post["petId"]) 
                 post["pet"] = pet 
                 enriched_posts.append(post) 
 
