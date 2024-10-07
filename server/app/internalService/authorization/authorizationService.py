@@ -27,7 +27,7 @@ class AuthorizationService:
             "rewards" : [],
             "petIds" : [],
             "imageId" : None,
-            "address": str
+            "address": data.address
         }
 
         try:
@@ -36,8 +36,8 @@ class AuthorizationService:
                 return {"message": "User registered successfully.", "user_id": str(result.inserted_id)}
             else:
                 return {"message": "Failed to register user."}
-        except:
-            raise Exception(f"An error occurred while inserting the user")  
+        except Exception as e:
+            raise Exception(f"An error occurred while inserting the user : {e}")  
         
     def login_user(self, data : LoginData, response: Response):
         user = self.users_collection.find_one({"email": data.email})

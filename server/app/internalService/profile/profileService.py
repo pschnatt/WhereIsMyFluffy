@@ -74,7 +74,8 @@ class ProfileService:
         if not image_id:
             raise HTTPException(status_code=404, detail="User has no image.")
 
-        image_data = self.fs.get(image_id)
+        image_data = self.fs.get(ObjectId(image_id)
+)
 
         content_type = image_data.content_type or "image/jpeg"
 
@@ -171,7 +172,7 @@ class ProfileService:
         if not image_id:
             raise HTTPException(status_code=404, detail="Pet has no image.")
         
-        image_data = self.fs.get(image_id)
+        image_data = self.fs.get(ObjectId(image_id))
         content_type = image_data.content_type or "image/jpeg"
         
         return Response(content=image_data.read(), media_type=content_type)
