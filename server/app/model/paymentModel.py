@@ -1,20 +1,17 @@
 from pydantic import BaseModel
 from typing import Optional
 
-class PaymentData(BaseModel):
-    ownerUserId: str
-    petName: str
-    finderName: str
+
+class AccountDetail(BaseModel):
     finderBankAccountNumber: str
     finderBankAccountType: str
     finderBankAccountName: str
-    amount: float
-    status: str
 
 class PaymentDetail(BaseModel):
-    finderBankAccountNumber: str
-    finderBankAccountType: str
-    finderBankAccountName: str
+    payerId: str
+    recieverId: str
+    status: str
+    amount: float
 
 class SlipUploadData(BaseModel):
     transactionId: str
