@@ -16,7 +16,6 @@ load_dotenv()
 class PaymentService:
     def __init__(self, dbCollection):
         self.payments_collection = dbCollection["payments"]
-
         self.authorization_service = AuthorizationService(dbCollection)
         self.verify_api_token = "a2ae274e-9774-4ea8-ab99-d51fdc472bc0"  # API Token for slip verification
 

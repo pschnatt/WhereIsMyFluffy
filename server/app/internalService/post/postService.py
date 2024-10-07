@@ -6,7 +6,7 @@ from app.internalService.profile.profileService import ProfileService
 
 class PostService:
     def __init__(self, dbCollection: Collection):
-        self.dbCollection = dbCollection
+        self.profileService = ProfileService(dbCollection)
         self.posts_collection = dbCollection["posts"]
         self.reply_collection = dbCollection["reply"]
         self.users_collection = dbCollection["users"]
@@ -64,12 +64,12 @@ class PostService:
         try:
             posts = list(self.posts_collection.find({}, {"userId": 1, "petId": 1, "address": 1, "reward": 1}))
             enriched_posts = []
-            profileService = ProfileService(self.dbCollection)
+            
             for post in posts:
                 post["_id"] = str(post["_id"]) 
-                user = profileService.getUser(post["userId"])
+                user = self.profileService.getUser(post["userId"])
                 post["user"] = user
-                pet = profileService.getPet(post["petId"]) 
+                pet = self.profileService.getPet(post["petId"]) 
                 post["pet"] = pet 
                 enriched_posts.append(post) 
 
