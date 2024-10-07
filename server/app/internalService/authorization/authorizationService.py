@@ -15,11 +15,9 @@ class AuthorizationService:
             raise ValueError("Email already exists.")
         hashed_password = bcrypt.hashpw(data.password.encode('utf-8'), bcrypt.gensalt())
         user_document = {
-            "firstName" : data.firstName, 
-            "lastName" : data.lastName,  
+            "userName" : data.userName, 
             "email" : data.email,
             "password" : hashed_password,
-            "phoneNumber": data.phoneNumber,
             "posts" : [],
             "createdAt" : datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "updatedAt" : datetime.now(timezone.utc).strftime("%Y-%m-%d"),
