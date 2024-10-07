@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-
+import 'package:ui/repository/pet_notification_repostiory.dart/post_replies.dart';
 
 class PetNotificationPage extends StatelessWidget {
-  const PetNotificationPage({super.key});
+  
+  List<PetNotificationReplies> petNotificationReplies = [];
+  PetNotificationPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -10,11 +12,11 @@ class PetNotificationPage extends StatelessWidget {
   }
 }
 
+
 Widget _buildBody() {
   return Padding(
     padding: const EdgeInsets.all(16.0),
     child: ListView(
-      
       children: [
         const Text(
           'Last seen',
@@ -25,46 +27,26 @@ Widget _buildBody() {
           ),
         ),
         const SizedBox(height: 20),
-        
-       _buildUserInfoCard(
-          userName: 'John',
-          userPhone: '0812345698',
-          userLocation: 'Bangkok city, Thailand',
-          userImageUrl: 'https://ntvb.tmsimg.com/assets/assets/487578_v9_bb.jpg?w=360&h=480', // User image URL
-          petImageUrl: 'https://www.americanhumane.org/app/uploads/2021/03/Panda2-1024x576.png', // Pet image URL
-          lastSeenTime: '5 min',
-          detailsLocation: 'ABC grocery',
-          petDetails: 'I found your pet beside the grocery store @ grand street',
-        ),
-        const SizedBox(height: 20),
-    
-        // Second user info card
-        _buildUserInfoCard(
-          userName: 'Jane',
-          userPhone: '0987654321',
-          userLocation: 'Chiang Mai, Thailand',
-          userImageUrl: 'https://ntvb.tmsimg.com/assets/assets/487578_v9_bb.jpg?w=360&h=480', // Replace with actual image URL
-          petImageUrl: 'https://www.americanhumane.org/app/uploads/2021/03/Panda2-1024x576.png', // Replace with actual pet image URL
-          lastSeenTime: '10 min',
-          detailsLocation: 'XYZ park',
-          petDetails: 'I saw your pet near the fountain in XYZ park',
-        ),
+
       ],
     ),
   );
 }
 
-Widget _buildUserInfoCard({
-  required String userName,
-  required String userPhone,
-  required String userLocation,
-  required String userImageUrl,
-  required String petImageUrl,
-  required String lastSeenTime,
-  required String detailsLocation,
-  required String petDetails,
-}) {
-  return Container(
+class PetNotificationReplyCard extends StatelessWidget {
+  final String iD;
+  final String postID;
+  final String userID;
+  final String address;
+  final String detail;
+  final String createdAt;
+  final String updatedAt;
+
+  const PetNotificationReplyCard({super.key, required this.iD, required this.postID, required this.userID, required this.address, required this.detail, required this.createdAt, required this.updatedAt});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
     padding: const EdgeInsets.all(16.0),
     decoration: BoxDecoration(
       color: const Color(0xFF4574D0),
@@ -76,7 +58,7 @@ Widget _buildUserInfoCard({
           children: [
             CircleAvatar(
               radius: 30,
-              backgroundImage: NetworkImage(userImageUrl), // User image
+              backgroundImage: NetworkImage("userImageUrl"), // User image
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -143,7 +125,6 @@ Widget _buildUserInfoCard({
             style: const TextStyle(color: Colors.white),
           ),
         ),
-
         const SizedBox(height: 5),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -171,8 +152,10 @@ Widget _buildUserInfoCard({
         _buildActionButtons(),
       ],
     ),
-  );
+  );;
+  }
 }
+
 
 
 Widget _buildActionButtons() {

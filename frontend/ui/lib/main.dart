@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ui/pages/home_page.dart';
 import 'package:ui/pages/pet_notification_page.dart';
 import 'package:ui/pages/user_profile_page.dart';
+import 'package:ui/repository/pet_notification_repostiory.dart/pet_notification_replies_service.dart';
 import 'package:ui/widgets/forms/lost_petform.dart';
 
 /// Flutter code sample for [NavigationBar].
@@ -30,12 +31,15 @@ class FluffyBottomNavBar extends StatefulWidget {
 
 class _FluffyBottomNavBarState extends State<FluffyBottomNavBar> {
   int currentPageIndex = 0;
+
+  final PetNotificationRepliesService petNotificationRepliesService = PetNotificationRepliesService();
   /*
   ElevatedButton(
                   child: const Text('Close BottomSheet'),
                   onPressed: () => Navigator.pop(context),
                 ),
                 */
+ 
   void _showModalBottomSheet(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
@@ -47,6 +51,16 @@ class _FluffyBottomNavBarState extends State<FluffyBottomNavBar> {
         );
       },
     );
+  }
+
+  void initstate() {
+    super.initState();
+    PetNotificationRepliesService.fetchPetNotificationReplies("").then((replies) {
+    // Handle the replies
+    print(replies);
+  }).catchError((error) {
+    print('Error fetching replies: $error');
+  });
   }
 
   @override
@@ -101,7 +115,7 @@ class _FluffyBottomNavBarState extends State<FluffyBottomNavBar> {
       ),
       body: <Widget>[
         /// Pet Notification page
-        const PetNotificationPage(),
+         PetNotificationPage(),
 
         /// Home page
         const HomePage(),
