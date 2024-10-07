@@ -7,7 +7,7 @@ from fastapi import HTTPException, Request
 from dotenv import load_dotenv
 from bson import ObjectId
 from datetime import datetime
-from app.model.paymentModel import PaymentData
+from app.model.paymentModel import PaymentData, PaymentDetail
 from app.internalService.authorization.authorizationService import AuthorizationService
 from app.model.postModel import PostData
 
@@ -19,24 +19,16 @@ class PaymentService:
         self.authorization_service = AuthorizationService(dbCollection)
         self.verify_api_token = "a2ae274e-9774-4ea8-ab99-d51fdc472bc0"  # API Token for slip verification
 
-    def create_user_payment(self, post_data: PostData, finder_data: dict, request: Request):
-        user = self.authorization_service.verify_jwt_token(request)
-        if not user:
+    def create_user_payment(self, paymentDetail: PaymentDetail, request: Request):
+        user_id = self.authorization_service.verify_jwt_token(request)
+        if not user_id:
             raise HTTPException(status_code=404, detail="User not found.")
         
-        user_id = self.authorization_service.users_collection.find_one({"_id": ObjectId(user_id)})
-
-        """Generate a bill for the owner to send money to the finder."""
         payment_data = {
-            "ownerUserId": user_id,
-            "petName": post_data.name,
-            "finderName": finder_data.get("finderName"),
-            "finderBankAccountNumber": finder_data.get("finderBankAccountNumber"),
-            "finderBankAccountType": finder_data.get("finderBankAccountType"),
-            "finderBankAccountName": finder_data.get("finderBankAccountName"),
-            "amount": post_data.reward,
-            "status": "unpaid",
-            "timestamp": datetime.utcnow().isoformat(),
+            "userId": user_id,
+            "finderBankAccountNumber": paymentDetail.finderBankAccountNumber,
+            "finderBankAccountType": paymentDetail.finderBankAccountType,
+            "finderBankAccountName": paymentDetail.finderBankAccountName,
         }
         
         transaction_id = str(ObjectId())

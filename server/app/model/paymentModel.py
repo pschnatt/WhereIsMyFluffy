@@ -11,6 +11,11 @@ class PaymentData(BaseModel):
     amount: float
     status: str
 
+class PaymentDetail(BaseModel):
+    finderBankAccountNumber: str
+    finderBankAccountType: str
+    finderBankAccountName: str
+
 class SlipUploadData(BaseModel):
     transactionId: str
     slip_image_url: str
