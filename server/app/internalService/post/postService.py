@@ -93,7 +93,7 @@ class PostService:
 
     def get_reply_by_id(self, reply_id: GetReplyById):
         try:
-            reply = self.reply_collection.find_one({"_id": ObjectId(reply_id)})
+            reply = self.reply_collection.find_one({"_id": ObjectId(reply_id.replyId)})
             if reply:
                 reply["_id"] = str(reply["_id"])
                 return reply
