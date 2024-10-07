@@ -24,8 +24,9 @@ class PostService:
         try:
             result = self.posts_collection.insert_one(post_document)
             if result.inserted_id:
+                user_id = ObjectId(data.userId)
                 self.users_collection.update_one(
-                    {"_id": data.userId},
+                    {"_id": user_id},
                     {"$push": {"posts": str(result.inserted_id)}}
                 )
                 return {"message": "Post created successfully.", "post_id": str(result.inserted_id)}
