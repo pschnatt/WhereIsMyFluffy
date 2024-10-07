@@ -21,7 +21,6 @@ class AuthorizationService:
             "password" : hashed_password,
             "phoneNumber": data.phoneNumber,
             "posts" : [],
-            "paypal" : data.paypal,
             "createdAt" : datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "updatedAt" : datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "rewards" : [],
