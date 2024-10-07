@@ -6,59 +6,100 @@ from fastapi import HTTPException, Request
 from dotenv import load_dotenv
 from bson import ObjectId
 from datetime import datetime
-from app.model.paymentModel import PaymentData, PaymentDetail
+from app.model.paymentModel import AccountDetail, PaymentDetail
 from app.internalService.authorization.authorizationService import AuthorizationService
 from app.model.postModel import PostData
+from app.model.authorizationModel import UserId
 
 load_dotenv()
 
 class PaymentService:
     def __init__(self, dbCollection):
-        self.payments_collection = dbCollection["payments"]
+        self.account_collection = dbCollection["account"]
+        self.payment_collection = dbCollection["payment"]
         self.authorization_service = AuthorizationService(dbCollection)
         self.verify_api_token = "a2ae274e-9774-4ea8-ab99-d51fdc472bc0"  # API Token for slip verification
 
-    def create_user_payment(self, paymentDetail: PaymentDetail, request: Request):
+    def create_user_payment(self, accountDetail: AccountDetail, request: Request):
         user_id = self.authorization_service.verify_jwt_token(request)
         if not user_id:
             raise HTTPException(status_code=404, detail="User not found.")
         
         payment_data = {
             "userId": user_id,
-            "finderBankAccountNumber": paymentDetail.finderBankAccountNumber,
-            "finderBankAccountType": paymentDetail.finderBankAccountType,
-            "finderBankAccountName": paymentDetail.finderBankAccountName,
+            "finderBankAccountNumber": accountDetail.finderBankAccountNumber,
+            "finderBankAccountType": accountDetail.finderBankAccountType,
+            "finderBankAccountName": accountDetail.finderBankAccountName,
+            "paymentList": []
         }
-        
-        transaction_id = str(ObjectId())
-        payment_data["transaction_id"] = transaction_id
-        
-        self.payments_collection.insert_one(payment_data)
+                
+        result = self.account_collection.insert_one(payment_data)
+
+        inserted_id = result.inserted_id
 
         return {
-            "transaction_id": transaction_id,
-            "status": "unpaid",
-            "timestamp": payment_data["timestamp"]
+            "payment_id": str(inserted_id)  
         }
+    
+    def get_user_payment(self, userId: UserId):
+        try:
+            payment_data = self.account_collection.find_one({"userId": userId})
+            
+            if not payment_data:
+                raise HTTPException(status_code=404, detail="Account details not found for the user.")
+            
+            payment_data["_id"] = str(payment_data["_id"])
+            
+            return payment_data
 
-    def upload_slip(self, transaction_id: str, slip_image_url: str):
-        """Owner uploads transaction slip, and status changes to 'pending'."""
-        payment_record = self.payments_collection.find_one({"transaction_id": transaction_id})
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
+    def addPayment(self, paymentDetail: PaymentDetail):
+        try:
+            payment_data = {
+                "payerId": paymentDetail.payerId,
+                "receiverId": paymentDetail.receiverId,
+                "status": paymentDetail.status, 
+                "amount": paymentDetail.amount
+            }
+            
+            result = self.payment_collection.insert_one(payment_data)
+            payment_id = result.inserted_id  
+            
+            update_result = self.account_collection.update_one(
+                {"userId": paymentDetail.payerId},
+                {"$push": {"paymentList": str(payment_id)}}  
+            )
+            
+            if update_result.matched_count == 0:
+                raise HTTPException(status_code=404, detail="Payer not found.")
 
-        if not payment_record:
-            raise HTTPException(status_code=404, detail="Payment record not found")
+            return {
+                "payment_id": str(payment_id),
+                "message": "Payment added and linked to payer successfully."
+            }
 
-        refNbr = self.extract_qr_code_data(slip_image_url)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error adding payment: {str(e)}")
 
-        update_result = self.payments_collection.update_one(
-            {"transaction_id": transaction_id},
-            {"$set": {"slip_image_url": slip_image_url, "status": "pending", "refNbr": refNbr}}
-        )
+    # def upload_slip(self, transaction_id: str, slip_image_url: str):
+    #     payment_record = self.payments_collection.find_one({"transaction_id": transaction_id})
 
-        if update_result.modified_count == 1:
-            return {"detail": "Slip uploaded successfully", "status": "pending"}
-        else:
-            raise HTTPException(status_code=500, detail="Failed to upload the slip")
+    #     if not payment_record:
+    #         raise HTTPException(status_code=404, detail="Payment record not found")
+
+    #     refNbr = self.extract_qr_code_data(slip_image_url)
+
+    #     update_result = self.payments_collection.update_one(
+    #         {"transaction_id": transaction_id},
+    #         {"$set": {"slip_image_url": slip_image_url, "status": "pending", "refNbr": refNbr}}
+    #     )
+
+    #     if update_result.modified_count == 1:
+    #         return {"detail": "Slip uploaded successfully", "status": "pending"}
+    #     else:
+    #         raise HTTPException(status_code=500, detail="Failed to upload the slip")
 
     # def verify_slip(self, transaction_id: str):
     #     """Verify the uploaded slip using OpenSlipVerify API and update the status."""
@@ -135,65 +176,24 @@ class PaymentService:
 
     #     raise HTTPException(status_code=400, detail="Cannot extract refNbr: QR code could not be decoded.")
 
-    def get_user_payment(self, transaction_id: str):
-        """View payment details."""
-        payment_record = self.payments_collection.find_one({"transaction_id": transaction_id})
+    
 
-        if not payment_record:
-            raise HTTPException(status_code=404, detail="Payment record not found")
+    # def reupload_slip(self, transaction_id: str, slip_image_url: str):
+    #     """Allow re-uploading of the slip if the status is 'pending'."""
+    #     payment_record = self.payments_collection.find_one({"transaction_id": transaction_id})
 
-        return payment_record
+    #     if not payment_record:
+    #         raise HTTPException(status_code=404, detail="Payment record not found")
 
-    def reupload_slip(self, transaction_id: str, slip_image_url: str):
-        """Allow re-uploading of the slip if the status is 'pending'."""
-        payment_record = self.payments_collection.find_one({"transaction_id": transaction_id})
+    #     if payment_record["status"] != "pending":
+    #         raise HTTPException(status_code=400, detail="Slip not found")
 
-        if not payment_record:
-            raise HTTPException(status_code=404, detail="Payment record not found")
+    #     update_result = self.payments_collection.update_one(
+    #         {"transaction_id": transaction_id},
+    #         {"$set": {"slip_image_url": slip_image_url}}
+    #     )
 
-        if payment_record["status"] != "pending":
-            raise HTTPException(status_code=400, detail="Slip not found")
-
-        update_result = self.payments_collection.update_one(
-            {"transaction_id": transaction_id},
-            {"$set": {"slip_image_url": slip_image_url}}
-        )
-
-        if update_result.modified_count == 1:
-            return {"detail": "Slip re-uploaded successfully", "status": "pending"}
-        else:
-            raise HTTPException(status_code=500, detail="Failed to re-upload the slip")
-
-def update_user_payment_data(self, user_id: str, finder_data: dict):
-    """
-    Update user payment data if the finder has not entered bank account details.
-    """
-    user = self.authorization_service.users_collection.find_one({"_id": ObjectId(user_id)})
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    finder_bank_account_number = finder_data.get("finderBankAccountNumber")
-    finder_bank_account_name = finder_data.get("finderBankAccountName")
-    finder_bank_account_type = finder_data.get("finderBankAccountType")
-
-    if not finder_bank_account_number or not finder_bank_account_name or not finder_bank_account_type:
-        raise HTTPException(
-            status_code=400,
-            detail="Finder bank details missing. Please enter the required data."
-            # need to be prompt to page for enter payment data
-        )
-
-    update_result = self.authorization_service.users_collection.update_one(
-        {"_id": ObjectId(user_id)},
-        {"$set": {
-            "finderBankAccountNumber": finder_bank_account_number,
-            "finderBankAccountName": finder_bank_account_name,
-            "finderBankAccountType": finder_bank_account_type
-        }}
-    )
-
-    if update_result.modified_count == 1:
-        return {"detail": "User payment data updated successfully"}
-    else:
-        raise HTTPException(status_code=500, detail="Failed to update user payment data")
+    #     if update_result.modified_count == 1:
+    #         return {"detail": "Slip re-uploaded successfully", "status": "pending"}
+    #     else:
+    #         raise HTTPException(status_code=500, detail="Failed to re-upload the slip")
