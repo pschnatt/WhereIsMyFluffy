@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
+import 'package:ui/pages/location_picker_page.dart';
+
 class FoundPetForm extends StatefulWidget {
   const FoundPetForm({super.key});
 
@@ -14,6 +16,8 @@ class _FoundPetFormState extends State<FoundPetForm> {
   final List<File> _images = [];
   final _picker = ImagePicker();
   String? selectedGender;
+  String? selectedLocation; // To store the selected location
+
 
   // Form fields controllers
   TextEditingController nameController = TextEditingController();
@@ -33,6 +37,18 @@ class _FoundPetFormState extends State<FoundPetForm> {
       });
     }
   }
+  Future<void> _pickLocation() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const LocationPickerPage()),
+    );
+    if (result != null) {
+      setState(() {
+        selectedLocation = result; // Update the location
+      });
+    }
+  }
+
 
   // Submit form function
   void _submitForm() {
@@ -65,7 +81,7 @@ class _FoundPetFormState extends State<FoundPetForm> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Help owenrs find their fluffy!',
+                'Help owners find their fluffy!',
                 style: TextStyle(fontSize: 14, color: Color(0xFF4675D1)),
               ),
               const SizedBox(height: 16),
@@ -73,16 +89,41 @@ class _FoundPetFormState extends State<FoundPetForm> {
               // Images Picker
               //Text('Images:', style: TextStyle(fontSize: 12)),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 10,
+              Row(
                 children: [
-                  for (var image in _images)
-                    Image.file(image,
-                        height: 100, width: 100, fit: BoxFit.cover),
-                  IconButton(
-                    icon: const Icon(Icons.add_a_photo),
-                    onPressed: _pickImages,
-                  )
+                  Container(
+                    width: 80,
+                    child: const Text(
+                      'Location:',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF4675D1)),
+                    ),
+                  ),
+                  
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            selectedLocation ??
+                                'Pick a location', // Display picked location or default text
+                            style: TextStyle(
+                              color: selectedLocation != null
+                                  ? Colors.black
+                                  : Colors.black.withOpacity(0.5),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: _pickLocation, // Navigate to pick location
+                          icon: const Icon(Icons.location_on),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),

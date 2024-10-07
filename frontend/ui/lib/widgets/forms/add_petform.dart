@@ -69,22 +69,6 @@ class _AddPetFormState extends State<AddPetForm> {
               ),
               const SizedBox(height: 16),
 
-              // Images Picker
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 10,
-                children: [
-                  for (var image in _images)
-                    Image.file(image,
-                        height: 100, width: 100, fit: BoxFit.cover),
-                  IconButton(
-                    icon: const Icon(Icons.add_a_photo),
-                    onPressed: _pickImages,
-                  )
-                ],
-              ),
-              const SizedBox(height: 16),
-
               // Name Field
               _buildTextField('Name:', nameController, 'Enter pet name', 'Please enter the pet\'s name'),
 
@@ -201,7 +185,7 @@ class _AddPetFormState extends State<AddPetForm> {
                       ),
                     ),
                     onPressed: _submitForm,
-                    child: const Text('Post'),
+                    child: const Text('Finish'),
                   ),
                 ),
               ),

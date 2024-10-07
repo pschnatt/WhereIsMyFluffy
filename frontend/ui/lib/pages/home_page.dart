@@ -1,36 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:ui/widgets/pets_postcard.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
-
-  @override
-  _HomePageState createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  List<dynamic> _posts = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchPosts();
-  }
-
-  Future<void> _fetchPosts() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:8000/post/getPosts/'));
-
-    if (response.statusCode == 200) {
-      setState(() {
-        _posts = jsonDecode(response.body);
-        debugPrint(response.body);
-      });
-    } else {
-      throw Exception('Failed to load posts');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +12,24 @@ class _HomePageState extends State<HomePage> {
         children: [
           _buildSearchBar(),
           const SizedBox(height: 16.0),
-          _posts.isEmpty ? _buildEmptyAdvertisement() : _buildPostList(),
+          _buildEmpytAdvertisement(),
+          const SizedBox(height: 16.0),
+          _buildPetsPostCard(
+            name: 'Fluffy',
+            userImageUrl: 
+                "https://placedog.net/500",
+            description: 'Cute and fluffy',
+            distance: '1.5 km',
+            petImageUrl: 'https://placedog.net/500',
+          ),
+          const SizedBox(height: 16.0),
+          _buildPetsPostCard(
+            name: 'Bella',
+            userImageUrl: 'https://placedog.net/500/g',
+            description: 'Cute and fluffy',
+            distance: '1.5 km',
+            petImageUrl: 'https://placedog.net/500/g',
+          ),
         ],
       ),
     );
@@ -58,7 +47,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildEmptyAdvertisement() {
+  Widget _buildEmpytAdvertisement() {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
       elevation: 4,
@@ -67,7 +56,7 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             Text(
-              'No posts found',
+              'No Ad found',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
@@ -86,26 +75,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildPostList() {
-    return Column(
-      children: _posts.map((post) {
-        return _buildPetsPostCard(
-          name: post['name'],
-          userImageUrl: 'https://example.com/user-profile.png', // Replace with actual user image URL if available
-          description: post['description'] ?? 'No description provided', // You can change this if you have a description field
-          distance: 'Unknown distance', // Modify this as needed
-          petImageUrl: post['petImageUrl'] ?? 'https://example.com/pet-image.png', // Replace with actual pet image URL
-        );
-      }).toList(),
-    );
-  }
-
   Widget _buildPetsPostCard({
     required String name,
     required String userImageUrl,
     required String description,
     required String distance,
     required String petImageUrl,
+
   }) {
     return PetsPostCard(
       name: name,

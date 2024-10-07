@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:ui/pages/location_picker_page.dart';
+import 'package:ui/pages/user_profile_page.dart';
 
 class LostPetForm extends StatefulWidget {
   @override
@@ -13,6 +15,7 @@ class _LostPetFormState extends State<LostPetForm> {
   final List<File> _images = [];
   final _picker = ImagePicker();
   String? selectedGender;
+  String? selectedLocation; // To store the selected location
 
   // Form fields controllers
   TextEditingController nameController = TextEditingController();
@@ -29,6 +32,19 @@ class _LostPetFormState extends State<LostPetForm> {
     if (pickedFiles != null) {
       setState(() {
         _images.addAll(pickedFiles.map((pickedFile) => File(pickedFile.path)));
+      });
+    }
+  }
+
+  // Navigate to UserProfilePage and await the selected location
+  Future<void> _pickLocation() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const LocationPickerPage()),
+    );
+    if (result != null) {
+      setState(() {
+        selectedLocation = result; // Update the location
       });
     }
   }
@@ -68,338 +84,128 @@ class _LostPetFormState extends State<LostPetForm> {
                 style: TextStyle(fontSize: 14, color: Color(0xFF4675D1)),
               ),
               const SizedBox(height: 16),
-
-              // Images Picker
-              //Text('Images:', style: TextStyle(fontSize: 12)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 10,
-                children: [
-                  for (var image in _images)
-                    Image.file(image,
-                        height: 100, width: 100, fit: BoxFit.cover),
-                  IconButton(
-                    icon: const Icon(Icons.add_a_photo),
-                    onPressed: _pickImages,
-                  )
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              Row(
-                children: [
-                  // Label
-                  Container(
-                    width: 80, // Adjust the width as needed
-                    child: const Text(
-                      'Name:',
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4675D1)),
-                    ),
-                  ),
-
-                  // TextFormField
-                  Expanded(
-                    child: TextFormField(
-                      controller: nameController,
-                      decoration: InputDecoration(
-                        hintText: 'Enter pet name',
-                        hintStyle: TextStyle(
-                          fontSize: 12,
-                          color:
-                              Colors.black.withOpacity(0.3), // Set opacity here
-                        ),
-                        border: const OutlineInputBorder(),
-                        contentPadding:
-                            const EdgeInsets.fromLTRB(10.0, 5.0, 0, 10.0),
-                        isDense: true, // Makes the text field denser
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter the pet\'s name';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              Row(children: [
-                Container(
-                  width: 80,
-                  child: const Text(
-                    'Age:',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF4675D1)),
-                  ),
-                ),
-                Expanded(
-                  child: TextFormField(
-                    controller: ageController,
-                    decoration: InputDecoration(
-                      hintText: 'Enter pet\'s age',
-                      hintStyle: TextStyle(
-                        fontSize: 12,
-                        color:
-                            Colors.black.withOpacity(0.3), // Set opacity here
-                      ),
-                      border: const OutlineInputBorder(),
-                      contentPadding:
-                          const EdgeInsets.fromLTRB(10.0, 5.0, 0, 10.0),
-                      isDense: true,
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the pet\'s age';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-              ]),
-              const SizedBox(height: 16),
-
-              Row(children: [
-                Container(
-                  width: 80,
-                  child: const Text(
-                    'Weight:',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF4675D1)),
-                  ),
-                ),
-                Expanded(
-                  child: TextFormField(
-                    controller: weightController,
-                    decoration: InputDecoration(
-                      hintText: 'Enter pet\'s weight',
-                      hintStyle: TextStyle(
-                        fontSize: 12,
-                        color:
-                            Colors.black.withOpacity(0.3), // Set opacity here
-                      ),
-                      border: const OutlineInputBorder(),
-                      contentPadding:
-                          const EdgeInsets.fromLTRB(10.0, 5.0, 0, 10.0),
-                      isDense: true,
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the pet\'s weight';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-              ]),
-              const SizedBox(height: 16),
-
-              // Gender Dropdown
+              
               Row(
                 children: [
                   Container(
                     width: 80,
                     child: const Text(
-                      'Gender:',
+                      'Choose pet:',
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF4675D1)),
                     ),
                   ),
+                  
                   Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: selectedGender,
-                      items: <String>['Male', 'Female', 'Unknown']
-                          .map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          selectedGender =
-                              newValue; // Update the selected value
-                        });
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Select pet\'s gender',
-                        hintStyle: TextStyle(
-                          fontSize: 12,
-                          color: Colors.black.withOpacity(0.3),
+                    child: Row(
+                      children: [
+                        Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: selectedGender,
+                        items: <String>['Male', 'Female', 'Unknown']
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            selectedGender = newValue;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Select your pet',
+                          hintStyle: TextStyle(
+                            fontSize: 18,
+                            color: Colors.black.withOpacity(0.3),
+                          ),
+                          border: const OutlineInputBorder(),
+                          contentPadding:
+                              const EdgeInsets.fromLTRB(10.0, 5.0, 0, 10.0),
                         ),
-                        border: const OutlineInputBorder(),
-                        contentPadding:
-                            const EdgeInsets.fromLTRB(10.0, 5.0, 0, 10.0),
-                        //isDense: true,
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Please select the pet\'s gender';
+                          }
+                          return null;
+                        },
                       ),
-                      validator: (value) {
-                        if (value == null) {
-                          return 'Please select the pet\'s gender';
-                        }
-                        return null;
-                      },
+                    ),
+                      ],
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-
-              Row(children: [
-                Container(
-                  width: 80,
-                  child: const Text(
-                    'Location:',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF4675D1)),
-                  ),
-                ),
-                Expanded(
-                  child: TextFormField(
-                    controller: locationController,
-                    decoration: InputDecoration(
-                      hintText: 'Lost at (Location)',
-                      hintStyle: TextStyle(
-                        fontSize: 12,
-                        color:
-                            Colors.black.withOpacity(0.3), // Set opacity here
-                      ),
-                      border: const OutlineInputBorder(),
-                      contentPadding:
-                          const EdgeInsets.fromLTRB(10.0, 5.0, 0, 10.0),
-                      isDense: true,
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Lost at (Location)';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-              ]),
-              const SizedBox(height: 16),
-
-              Row(children: [
-                Container(
-                  width: 80,
-                  child: const Text(
-                    'Reward:',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF4675D1)),
-                  ),
-                ),
-                Expanded(
-                  child: TextFormField(
-                    controller: rewardController,
-                    decoration: InputDecoration(
-                      hintText: 'Reward',
-                      hintStyle: TextStyle(
-                        fontSize: 12,
-                        color:
-                            Colors.black.withOpacity(0.3), // Set opacity here
-                      ),
-                      border: const OutlineInputBorder(),
-                      contentPadding:
-                          const EdgeInsets.fromLTRB(10.0, 5.0, 0, 10.0),
-                      isDense: true,
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Reward';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-              ]),
-              const SizedBox(height: 16),
-
-              Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start, // Align items to the start
+              Row(
                 children: [
-                  const Text(
-                    'Details:',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF4675D1), // Set color to your hex value
+                  Container(
+                    width: 80,
+                    child: const Text(
+                      'Location:',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF4675D1)),
                     ),
                   ),
-                  const SizedBox(
-                      height:
-                          4), // Add a small space between label and text field
-                  TextFormField(
-                    controller: detailsController,
-                    decoration: InputDecoration(
-                      hintText: 'Any additional details',
-                      hintStyle: TextStyle(
-                        fontSize: 12,
-                        color:
-                            Colors.black.withOpacity(0.3), // Set opacity here
-                      ),
-                      border: const OutlineInputBorder(),
-                      contentPadding:
-                          const EdgeInsets.fromLTRB(10.0, 5.0, 0, 50.0),
-                      isDense: true,
+                  
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            selectedLocation ??
+                                'Pick a location', // Display picked location or default text
+                            style: TextStyle(
+                              color: selectedLocation != null
+                                  ? Colors.black
+                                  : Colors.black.withOpacity(0.5),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: _pickLocation, // Navigate to pick location
+                          icon: const Icon(Icons.location_on),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(
-                  height: 16), // Add spacing below the details section
+              const SizedBox(height: 16),
 
-              // Submit Button Container
+              // Other form fields...
+
               Align(
-                alignment: Alignment.bottomRight, // Align to bottom right
+                alignment: Alignment.bottomRight,
                 child: Container(
-                  width: 120, // Set the width of the button
-                  height: 35, // Set the height of the button
+                  width: 120,
+                  height: 35,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          const Color(0xFF4675D1), // Background color
-                      foregroundColor: Colors.white, // Text color
+                      backgroundColor: const Color(0xFF4675D1),
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(15.0), // Rounded corners
+                        borderRadius: BorderRadius.circular(15.0),
                       ),
                     ),
-                    onPressed: () {
-                      if (_formKey.currentState?.validate() == true) {
-                        // Process data (e.g., send to a server or save locally)
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Submitting your lost pet info!')),
-                        );
-                      }
-                    },
+                    onPressed: _submitForm,
                     child: const Text('Post'),
                   ),
                 ),
               ),
-              const SizedBox(height: 16), // Add space between buttons
+              const SizedBox(height: 16),
               Container(
                 width: 120,
                 height: 35,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Colors.green, // Different color for clarity
+                    backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15.0),
